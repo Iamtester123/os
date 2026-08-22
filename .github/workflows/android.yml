@@ -1,0 +1,38 @@
+name: Crear APK 
+on: [push, workflow_dispatch]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Instalar dependencias de Android
+        run: |
+          sudo apt update
+          sudo apt install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev sqlite3 bzip2 libbz2-dev
+          pip install --upgrade pip
+          pip install buildozer cython kivy yt-dlp
+
+      - name: Generar configuracion limpia
+        run: |
+          buildozer init
+          # Inyectamos tus requerimientos y permisos directo sin errores
+          sed -i 's/requirements = .*/requirements = python3,kivy,yt_dlp/g' buildozer.spec
+          sed -i 's/#?android.permissions = .*/android.permissions = INTERNET,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE/g' buildozer.spec
+
+      - name: Fabricar APK con Buildozer
+        run: |
+          export PATH=$PATH:~/.local/bin
+          buildozer -v android debug
+
+      - name: Guardar el archivo APK listo
+        uses: actions/upload-artifact@v4
+        with:
+          name: App_Mama_Instalable
+          path: bin/*.apk
