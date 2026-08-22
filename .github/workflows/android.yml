@@ -25,15 +25,19 @@ jobs:
           sed -i 's/requirements = .*/requirements = python3,kivy,yt_dlp/g' buildozer.spec
           sed -i 's/#?android.permissions = .*/android.permissions = INTERNET,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE/g' buildozer.spec
 
-      - name: Aceptar Licencias de Google Android (Solucion Critica)
+      - name: Forzar instalacion de herramientas y aceptar licencias (Solucion SDK)
         run: |
+          # Creamos y preparamos las rutas del SDK antes de lanzar Buildozer
+          mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin
           mkdir -p ~/.buildozer/android/platform/android-sdk/tools/bin
-          # Forzamos la aprobacion de contratos para desbloquear AIDL de inmediato
+          
+          # Forzamos la descarga nativa e inyectamos la aprobacion de contratos de Google
           yes | buildozer android licenses || true
 
       - name: Fabricar APK con Buildozer
         run: |
           export PATH=$PATH:~/.local/bin
+          # Forzamos a Buildozer a descargar el empaquetador correcto
           buildozer -v android debug
 
       - name: Guardar el archivo APK listo
