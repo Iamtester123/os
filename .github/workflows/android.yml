@@ -12,6 +12,9 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Configurar Laboratorio de Android Oficial (Solucion Definitiva)
+        uses: android-actions/setup-android@v3
+
       - name: Instalar dependencias del sistema
         run: |
           sudo apt update
@@ -25,19 +28,9 @@ jobs:
           sed -i 's/requirements = .*/requirements = python3,kivy,yt_dlp/g' buildozer.spec
           sed -i 's/#?android.permissions = .*/android.permissions = INTERNET,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE/g' buildozer.spec
 
-      - name: Forzar instalacion de herramientas y aceptar licencias (Solucion SDK)
-        run: |
-          # Creamos y preparamos las rutas del SDK antes de lanzar Buildozer
-          mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin
-          mkdir -p ~/.buildozer/android/platform/android-sdk/tools/bin
-          
-          # Forzamos la descarga nativa e inyectamos la aprobacion de contratos de Google
-          yes | buildozer android licenses || true
-
       - name: Fabricar APK con Buildozer
         run: |
           export PATH=$PATH:~/.local/bin
-          # Forzamos a Buildozer a descargar el empaquetador correcto
           buildozer -v android debug
 
       - name: Guardar el archivo APK listo
