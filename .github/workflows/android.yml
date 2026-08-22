@@ -1,4 +1,4 @@
-name: Crear APK 
+name: Crear APK de Mama
 on: [push, workflow_dispatch]
 
 jobs:
@@ -12,19 +12,24 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Instalar dependencias de Android
+      - name: Instalar dependencias del sistema
         run: |
           sudo apt update
-          sudo apt install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev sqlite3 bzip2 libbz2-dev
+          sudo apt install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev sqlite3 bzip2 libbz2-dev build-essential libstdc++6 aidl
           pip install --upgrade pip
           pip install buildozer cython kivy yt-dlp
 
       - name: Generar configuracion limpia
         run: |
           buildozer init
-          # Inyectamos tus requerimientos y permisos directo sin errores
           sed -i 's/requirements = .*/requirements = python3,kivy,yt_dlp/g' buildozer.spec
           sed -i 's/#?android.permissions = .*/android.permissions = INTERNET,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE/g' buildozer.spec
+
+      - name: Aceptar Licencias de Google Android (Solucion Critica)
+        run: |
+          mkdir -p ~/.buildozer/android/platform/android-sdk/tools/bin
+          # Forzamos la aprobacion de contratos para desbloquear AIDL de inmediato
+          yes | buildozer android licenses || true
 
       - name: Fabricar APK con Buildozer
         run: |
