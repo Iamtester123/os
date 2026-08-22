@@ -19,20 +19,25 @@ jobs:
           pip install --upgrade pip
           pip install buildozer cython kivy yt-dlp
 
-      - name: Preinstalar y estructurar el SDK moderno de Google (Solucion 2026)
+      - name: Engañar a Buildozer instalando el SDK en la ruta vieja (Solucion Definitiva)
         run: |
-          # 1. Creamos la estructura de carpetas moderna que exige Google y Buildozer
+          # 1. Creamos a la fuerza tanto la carpeta moderna como la carpeta vieja que exige Buildozer
           mkdir -p ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest
+          mkdir -p ~/.buildozer/android/platform/android-sdk/tools/bin
           
-          # 2. Descargamos directamente las herramientas oficiales de comandos de Android desde los servidores de Google
+          # 2. Descargamos las herramientas oficiales directamente de los servidores de Google
           wget -q https://google.com -O cmdline.zip
           
-          # 3. Descomprimimos e instalamos el sdkmanager nativo en su lugar correcto
+          # 3. Descomprimimos los comandos reales de Android
           unzip -q cmdline.zip
           mv cmdline-tools/* ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/
           rm -rf cmdline-tools cmdline.zip
           
-          # 4. Creamos la carpeta de licencias e inyectamos la aprobacion digital de contratos de Google
+          # 4. TRUCO DE INGENIERÍA: Creamos un puente directo (enlace) desde la carpeta vieja hacia la nueva
+          # De esta forma, cuando Buildozer busque en 'tools/bin/sdkmanager', el sistema lo desviará al archivo real
+          ln -s ~/.buildozer/android/platform/android-sdk/cmdline-tools/latest/bin/sdkmanager ~/.buildozer/android/platform/android-sdk/tools/bin/sdkmanager
+          
+          # 5. Creamos la firma digital de las licencias para que no pida confirmacion en pantalla
           mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
           echo -e "244d242542139071222304531819a3217b152345\n284a16438b9d7b63ea985a2dbe62fb0c72133124\n7c30d64b34d36a0c516119b3149a0e2a3113c29f" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
 
@@ -45,7 +50,7 @@ jobs:
       - name: Fabricar APK con Buildozer
         run: |
           export PATH=$PATH:~/.local/bin
-          # Buildozer detectará el sdkmanager ya instalado y configurado con sus licencias, pasando de largo sin errores
+          # Ahora Buildozer encontrará el puente creado en 'tools/bin' y compilará de largo
           buildozer -v android debug
 
       - name: Guardar el archivo APK listo
