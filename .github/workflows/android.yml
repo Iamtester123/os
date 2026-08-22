@@ -12,12 +12,10 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Configurar Laboratorio de Android Oficial (Solucion Definitiva)
-        uses: android-actions/setup-android@v3
-
-      - name: Instalar dependencias del sistema
+      - name: Instalar dependencias del sistema y AIDL global
         run: |
           sudo apt update
+          # Instalamos aidl y librerias esenciales directo en el nucleo de Linux
           sudo apt install -y git zip unzip openjdk-17-jdk autoconf libtool pkg-config zlib1g-dev libncurses5-dev libgdbm-dev libnss3-dev libssl-dev libreadline-dev libffi-dev libsqlite3-dev sqlite3 bzip2 libbz2-dev build-essential libstdc++6 aidl
           pip install --upgrade pip
           pip install buildozer cython kivy yt-dlp
@@ -27,6 +25,20 @@ jobs:
           buildozer init
           sed -i 's/requirements = .*/requirements = python3,kivy,yt_dlp/g' buildozer.spec
           sed -i 's/#?android.permissions = .*/android.permissions = INTERNET,WRITE_EXTERNAL_STORAGE,READ_EXTERNAL_STORAGE/g' buildozer.spec
+
+      - name: Crear puente de AIDL y aceptar licencias (Solucion Definitiva)
+        run: |
+          # 1. Forzamos la creacion previa de las carpetas internas que usara Buildozer
+          mkdir -p ~/.buildozer/android/platform/android-sdk/build-tools/34.0.0
+          
+          # 2. PARCHE CRÍTICO: Copiamos el ejecutable aidl del sistema al lugar exacto donde Buildozer lo busca
+          sudo cp $(which aidl) ~/.buildozer/android/platform/android-sdk/build-tools/34.0.0/aidl
+          sudo chmod +x ~/.buildozer/android/platform/android-sdk/build-tools/34.0.0/aidl
+          
+          # 3. Inyectamos la aprobacion automatica de contratos de Google para que no se frene
+          mkdir -p ~/.buildozer/android/platform/android-sdk/licenses
+          echo -e "244d242542139071222304531819a3217b152345" > ~/.buildozer/android/platform/android-sdk/licenses/android-sdk-license
+          yes | buildozer android licenses || true
 
       - name: Fabricar APK con Buildozer
         run: |
